@@ -4,20 +4,19 @@ const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
-const logger = require('koa-logger')
 const log4js = require('./utils/log4j.js')
-const index = require('./routes/index')
+const router = require('koa-router')()
 const users = require('./routes/users')
 
 // error handler
 onerror(app)
 
+require('./config/db')
 // middlewares
 app.use(bodyparser({
-  enableTypes:['json', 'form', 'text']
+  enableTypes: ['json', 'form', 'text']
 }))
 app.use(json())
-// app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
 
 app.use(views(__dirname + '/views', {
@@ -30,8 +29,9 @@ app.use(async (ctx, next) => {
   log4js.info('log output')
 })
 // routes
-app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
+router.prefix('/api') // 定义一级路由
+router.use(users.routes(), users.allowedMethods())
+app.use(router.routes(), users.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
